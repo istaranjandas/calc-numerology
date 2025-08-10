@@ -1,266 +1,358 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Calculate Numbers</title>
-  <!-- UIkit CSS -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/uikit/3.7.4/css/uikit.min.css" />
-  <link rel="icon" type="image/x-icon" href="calculator.ico">
-  <style>
-    html{
-      background-color: #75E6DA;
-    }
-    body {
-      background-color: #75E6DA;
-      font-family: Arial, sans-serif;
-    }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calculate Numbers</title>
+<link rel="icon" href="calculator.ico" type="image/x-icon">
 
-    .uk-card-default {
-      background-color: white;
-      border: none;
-      box-shadow: 0px 1px 10px rgba(0, 0, 0, 0.1);
-    }
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Inter:wght@400;500&display=swap" rel="stylesheet">
 
-    .uk-card-title {
-      color: #1d2c4d;
-      font-weight: bold;
-      font-size: 20px;
-      margin-bottom: 20px;
-    }
+<style>
+  /* Global Styles */
+  * {margin:0;padding:0;box-sizing:border-box;}
+  html, body {
+    font-family: 'Inter', sans-serif;
+    background: #111;
+    color: #fff;
+    overflow-x: hidden;
+  }
 
-    .uk-form-stacked .uk-form-label {
-      color: #1d2c4d;
-      font-size: 16px;
-      margin-bottom: 10px;
-    }
+  /* Animated Gradient Overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: linear-gradient(-45deg, #111, #1b1b1b, #222, #111);
+    background-size: 400% 400%;
+    animation: gradientShift 15s ease infinite;
+    z-index: -1;
+  }
+  @keyframes gradientShift {
+    0% {background-position: 0% 50%;}
+    50% {background-position: 100% 50%;}
+    100% {background-position: 0% 50%;}
+  }
 
-    .uk-form-controls {
-      margin-bottom: 20px;
-    }
+  /* Typography */
+  h1, h2 {
+    font-family: 'Playfair Display', serif;
+    letter-spacing: 1px;
+  }
+  h1 {
+    font-size: 3rem;
+    color: #C0A060;
+  }
+  p {
+    font-size: 1.1rem;
+    opacity: 0.85;
+  }
 
-    .uk-form-stacked .uk-input {
-      background-color: #f2f2f2;
-      border: none;
-      border-radius: 5px;
-      color: #1d2c4d;
-      font-size: 16px;
-      padding: 10px;
-    }
+  /* Layout */
+  .container {
+    max-width: 1200px;
+    margin: auto;
+    padding: 5rem 1rem;
+    position: relative;
+    z-index: 2;
+  }
+  .header {
+    text-align: center;
+    margin-bottom: 3rem;
+    opacity: 0;
+    transform: translateY(50px);
+    transition: 1s ease;
+  }
+  .form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+  }
+  .card {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 2rem;
+    border-radius: 15px;
+    backdrop-filter: blur(15px);
+    box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+    transform: translateY(50px);
+    opacity: 0;
+    transition: 1s ease;
+  }
+  .card h2 {
+    color: #C0A060;
+    margin-bottom: 1rem;
+  }
+  label {
+    display: block;
+    margin: 0.5rem 0;
+    font-weight: 500;
+  }
+  input {
+    width: 100%;
+    padding: 0.8rem;
+    border-radius: 8px;
+    border: none;
+    margin-bottom: 1rem;
+    background: rgba(255,255,255,0.1);
+    color: white;
+  }
+  input::placeholder {color: rgba(255,255,255,0.5);}
+  button {
+    background: #C0A060;
+    color: black;
+    padding: 0.8rem 2rem;
+    border: none;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+    position: relative;
+    transition: transform 0.2s ease;
+  }
+  button:hover {transform: scale(1.05);}
+  .output {
+    margin-top: 1rem;
+    font-size: 1.2rem;
+    color: #fff;
+  }
 
-    .uk-form-stacked .uk-button-primary {
-      background-color: #1d2c4d;
-      border: none;
-      border-radius: 5px;
-      color: white;
-      font-size: 16px;
-      padding: 10px 20px;
-    }
+  /* Cursor */
+  .cursor {
+    width: 25px;
+    height: 25px;
+    border: 2px solid #C0A060;
+    border-radius: 50%;
+    position: fixed;
+    pointer-events: none;
+    transition: transform 0.15s ease;
+    z-index: 999;
+    transform: translate(-50%, -50%);
+  }
 
-    .uk-margin-small-bottom {
-      margin-bottom: 10px !important;
-    }
+  /* Footer */
+  footer {
+    text-align: center;
+    padding: 2rem;
+    font-size: 0.9rem;
+    color: rgba(255,255,255,0.6);
+    position: relative;
+    z-index: 2;
+  }
 
-    .uk-text-center {
-      text-align: center;
-    }
-
-    .uk-heading-medium {
-      color: #1d2c4d;
-      font-size: 30px;
-      font-weight: bold;
-      margin-bottom: 20px;
-    }
-
-    .uk-text-lead {
-      color: #1d2c4d;
-      font-size: 18px;
-      margin-bottom: 40px;
-    }
-
-    #results, #output, #vehcile_output {
-      background-color: #1d2c4d;
-      border-radius: 5px;
-      color: white;
-      font-size: 24px;
-      padding: 20px;
-      text-align: center;
-    }
-
-
-    @media screen and (max-width: 960px) {
-      .zxc {
-        width: 100% !important;
-        font-size: 1.2rem;
-        padding: 20px;
-      }
-      .zxc form, .zxc form * {
-        font-size: 1.1rem;
-      }
-    }
-
-    .heading{
-      padding: 7rem 7rem 2rem 7rem;
-      font-size: 3rem;
-    }
-    .explain{
-      font-size: 1.5rem;
-    }
-    .foot{
-      font-size: 1.4rem;
-      position: fixed;
-      bottom: 0;
-      width: 55%;
-    }
-
-    .main{
-      padding: 2rem 7rem 2rem 7rem;
-    }
-  </style>
+  /* Particle Canvas */
+  #particles {
+    position: fixed;
+    top:0;
+    left:0;
+    width: 100%;
+    height: 100%;
+    z-index: -2;
+    background: transparent;
+  }
+</style>
 </head>
 <body>
-  <div class="uk-container main">
-    <!-- Header -->
-    <div class="uk-text-center uk-margin">
-      <h1 class="uk-heading-medium heading">Calculate Your Numbers</h1>
-      <p class="uk-text-lead explain">Use the forms below to calculate your driver and conductor numbers, name number, and vehicle number.</p>
+
+<canvas id="particles"></canvas>
+<div class="cursor"></div>
+
+<div class="container">
+  <header class="header reveal">
+    <h1>Calculate Your Numbers</h1>
+    <p>Elegant, instant, and personalized numerology calculations.</p>
+  </header>
+
+  <div class="form-grid">
+    <div class="card reveal">
+      <h2>Driver & Conductor Numbers</h2>
+      <label for="birthdate">Birthdate (dd/mm/yyyy):</label>
+      <input type="text" id="birthdate" placeholder="01/01/1990">
+      <button onclick="calculate1()">Calculate</button>
+      <div id="results" class="output"></div>
     </div>
 
-    <!-- Calculator cards -->
-    <div class="uk-child-width-1-3@m zxc" uk-grid>
-      <!-- Driver and Conductor Numbers Form -->
-      <div class="uk-width-1-3@m">
-        <div class="uk-card uk-card-default uk-card-body uk-margin">
-          <h2 class="uk-card-title">DriverConductor Numbers</h2>
-          <form class="uk-form-stacked">
-            <div class="uk-margin">
-              <label class="uk-form-label" for="birthdate">Enter your birthdate (dd/mm/yyyy):</label>
-              <div class="uk-form-controls">
-                <input class="uk-input" id="birthdate" name="birthdate" type="text" placeholder="01/01/1990">
-              </div>
-            </div>
-            <div class="uk-margin">
-              <button class="uk-button uk-button-primary" type="button" onclick="calculate1()">Calculate</button>
-            </div>
-          </form>
-          <div id="results"></div>
-        </div>
-      </div>
+    <div class="card reveal">
+      <h2>Name Number</h2>
+      <label for="name">Your Name:</label>
+      <input type="text" id="name" placeholder="John Doe">
+      <button onclick="calculate2()">Calculate</button>
+      <div id="output" class="output"></div>
+    </div>
 
-      <!-- Name Number Form -->
-      <div class="uk-width-1-3@m zxc">
-        <div class="uk-card uk-card-default uk-card-body uk-margin">
-          <h2 class="uk-card-title">Calculate Name Number</h2>
-          <form class="uk-form-stacked">
-            <div class="uk-margin">
-              <label class="uk-form-label" for="name">Enter your name:</label>
-              <div class="uk-form-controls">
-                <input class="uk-input" id="name" name="name" type="text" placeholder="John Doe">
-              </div>
-            </div>
-            <div class="uk-margin">
-              <button class="uk-button uk-button-primary" type="button" onclick="calculate2()">Calculate</button>
-            </div>
-          </form>
-          <p id="output"></p>
-        </div>
-      </div>
+    <div class="card reveal">
+      <h2>Vehicle Number</h2>
+      <label for="vehicle_number">Vehicle Number:</label>
+      <input type="text" id="vehicle_number" placeholder="1234">
+      <button onclick="sumDigits()">Calculate</button>
+      <div id="vehcile_output" class="output"></div>
+    </div>
+  </div>
+</div>
 
-      <!-- Vehicle Number Form -->
-      <div class="uk-width-1-3@m zxc">
-        <div class="uk-card uk-card-default uk-card-body uk-margin">
-          <h2 class="uk-card-title">Calculate Vehicle Number</h2>
-          <form class="uk-form-stacked" onsubmit="sumDigits(); return false;">
-          <div class="uk-margin">
-          <label class="uk-form-label" for="vehicle_number">Enter your vehicle number:</label>
-          <div class="uk-form-controls">
-          <input class="uk-input" id="vehicle_number" name="vehicle_number" type="text" placeholder="1234">
-          </div>
-          </div>
-          <div class="uk-margin">
-          <button class="uk-button uk-button-primary" type="submit">Calculate</button>
-          </div>
-          </form>
-          <p id="vehcile_output"></p>
-          </div>
-          </div>
-        </div>
-        </body>
+<footer>
+  &copy; 2025 Calculate Numbers. All Rights Reserved.
+</footer>
 
-
-  <!-- UIkit JS -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/uikit/3.7.4/js/uikit.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/uikit/3.7.4/js/uikit-icons.min.js"></script>
-
-
-
-  <script>
-    function calculate1() {
-      let birthdate = document.getElementById("birthdate").value;
-      let dateParts = birthdate.split("/");
-      let day = parseInt(dateParts[0]);
-      let month = parseInt(dateParts[1]);
-      let year = parseInt(dateParts[2]);
-      let driver = day < 10 ? day : Math.floor(day / 10) + (day % 10);
-      let conductor = (day % 10) + (month % 10) + (year % 10) + Math.floor(day / 10) + Math.floor(month / 10) + Math.floor(year / 10);
-      while (conductor > 9) {
-        conductor = Math.floor(conductor / 10) + (conductor % 10);
+<script>
+  /* Scroll Reveal */
+  const reveals = document.querySelectorAll('.reveal');
+  window.addEventListener('scroll', () => {
+    reveals.forEach(el => {
+      const rect = el.getBoundingClientRect();
+      if(rect.top < window.innerHeight - 50) {
+        el.style.opacity = 1;
+        el.style.transform = 'translateY(0)';
       }
-      let resultsDiv = document.getElementById("results");
-      resultsDiv.innerHTML = "Driver No. - " + driver + "<br>Conductor No. - " + conductor;
+    });
+  });
+
+  /* Cursor Effect */
+  const cursor = document.querySelector('.cursor');
+  document.addEventListener('mousemove', e => {
+    cursor.style.left = e.clientX + 'px';
+    cursor.style.top = e.clientY + 'px';
+  });
+  document.querySelectorAll('button').forEach(btn => {
+    btn.addEventListener('mouseenter', () => cursor.style.transform = 'scale(1.5)');
+    btn.addEventListener('mouseleave', () => cursor.style.transform = 'scale(1)');
+  });
+
+  /* Particle Physics Background */
+  const canvas = document.getElementById('particles');
+  const ctx = canvas.getContext('2d');
+  let particlesArray = [];
+  let mouse = {x: null, y: null};
+
+  canvas.width = innerWidth;
+  canvas.height = innerHeight;
+
+  window.addEventListener('resize', () => {
+    canvas.width = innerWidth;
+    canvas.height = innerHeight;
+    initParticles();
+  });
+
+  window.addEventListener('mousemove', e => {
+    mouse.x = e.x;
+    mouse.y = e.y;
+  });
+
+  class Particle {
+    constructor(x, y, size, color) {
+      this.x = x;
+      this.y = y;
+      this.size = size;
+      this.color = color;
+      this.speedX = (Math.random() - 0.5) * 0.5;
+      this.speedY = (Math.random() - 0.5) * 0.5;
     }
-
-    function calculate2() {
-      const name = document.getElementById("name").value.toLowerCase();
-      const table = {
-        "a": 1, "i": 1, "j": 1, "q": 1, "y": 1,
-        "b": 2, "k": 2, "r": 2,
-        "c": 3, "g": 3, "l": 3, "s": 3,
-        "d": 4, "m": 4, "t": 4,
-        "e": 5, "h": 5, "n": 5, "x": 5,
-        "u": 6, "v": 6, "w": 6,
-        "o": 7, "z": 7,
-        "f": 8, "p": 8
-      };
-
-      let sum = 0;
-      for (let i = 0; i < name.length; i++) {
-        if (table.hasOwnProperty(name[i])) {
-          sum += table[name[i]];
-        }
-      }
-      while (sum > 9) {
-        sum = sum.toString().split("").reduce((acc, curr) => acc + parseInt(curr), 0);
-      }
-      document.getElementById("output").innerHTML = `Your numerological value is: ${sum}`;
+    draw() {
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+      ctx.fillStyle = this.color;
+      ctx.shadowColor = this.color;
+      ctx.shadowBlur = 15;
+      ctx.fill();
     }
+    update() {
+      this.x += this.speedX;
+      this.y += this.speedY;
 
-    function sumDigits() {
-      var vehicleNumber = document.getElementById("vehicle_number").value;
-      var sum = 0, sum1 = 0;
-      for (var i = 0; i < vehicleNumber.length; i++) {
-        if (!isNaN(vehicleNumber.charAt(i))) {
-          sum += parseInt(vehicleNumber.charAt(i));
-        }
+      // Bounce off edges
+      if (this.x < 0 || this.x > canvas.width) this.speedX *= -1;
+      if (this.y < 0 || this.y > canvas.height) this.speedY *= -1;
+
+      // Mouse repulsion
+      const dx = this.x - mouse.x;
+      const dy = this.y - mouse.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist < 100) {
+        this.x += dx / dist;
+        this.y += dy / dist;
       }
-      if (sum < 10) {
-        sum1 = sum;
-      } else {
-        while (sum > 0) {
-          sum1 += sum % 10;
-          sum = Math.floor(sum / 10);
-        }
-      }
-      document.getElementById("vehcile_output").innerHTML = "Your vehicle number is " + sum1;
+      this.draw();
     }
+  }
 
-    </script>
+  function initParticles() {
+    particlesArray = [];
+    const colors = ['#C0A060', '#FFD580', '#FFF0C0'];
+    for (let i = 0; i < 80; i++) {
+      const size = Math.random() * 2 + 1;
+      const x = Math.random() * canvas.width;
+      const y = Math.random() * canvas.height;
+      const color = colors[Math.floor(Math.random() * colors.length)];
+      particlesArray.push(new Particle(x, y, size, color));
+    }
+  }
 
-    <!-- Footer -->
-    <footer class="uk-text-center uk-margin foot">
-      <p>&copy; 2023 Calculate Numbers. IRD. All rights reserved.</p>
-    </footer>
+  function animateParticles() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    particlesArray.forEach(p => p.update());
+    requestAnimationFrame(animateParticles);
+  }
+
+  initParticles();
+  animateParticles();
+
+  /* Calculator Functions */
+  function calculate1() {
+    let birthdate = document.getElementById("birthdate").value;
+    let dateParts = birthdate.split("/");
+    if(dateParts.length !== 3) return;
+    let day = parseInt(dateParts[0]);
+    let month = parseInt(dateParts[1]);
+    let year = parseInt(dateParts[2]);
+    let driver = day < 10 ? day : Math.floor(day / 10) + (day % 10);
+    let conductor = (day % 10) + (month % 10) + (year % 10) + Math.floor(day / 10) + Math.floor(month / 10) + Math.floor(year / 10);
+    while (conductor > 9) {
+      conductor = Math.floor(conductor / 10) + (conductor % 10);
+    }
+    document.getElementById("results").innerHTML = `Driver No: ${driver}<br>Conductor No: ${conductor}`;
+  }
+
+  function calculate2() {
+    const name = document.getElementById("name").value.toLowerCase();
+    const table = {
+      "a": 1, "i": 1, "j": 1, "q": 1, "y": 1,
+      "b": 2, "k": 2, "r": 2,
+      "c": 3, "g": 3, "l": 3, "s": 3,
+      "d": 4, "m": 4, "t": 4,
+      "e": 5, "h": 5, "n": 5, "x": 5,
+      "u": 6, "v": 6, "w": 6,
+      "o": 7, "z": 7,
+      "f": 8, "p": 8
+    };
+    let sum = 0;
+    for (let i = 0; i < name.length; i++) {
+      if (table.hasOwnProperty(name[i])) {
+        sum += table[name[i]];
+      }
+    }
+    while (sum > 9) {
+      sum = sum.toString().split("").reduce((acc, curr) => acc + parseInt(curr), 0);
+    }
+    document.getElementById("output").innerHTML = `Your numerological value is: ${sum}`;
+  }
+
+  function sumDigits() {
+    var vehicleNumber = document.getElementById("vehicle_number").value;
+    var sum = 0, sum1 = 0;
+    for (var i = 0; i < vehicleNumber.length; i++) {
+      if (!isNaN(vehicleNumber.charAt(i))) {
+        sum += parseInt(vehicleNumber.charAt(i));
+      }
+    }
+    if (sum < 10) {
+      sum1 = sum;
+    } else {
+      while (sum > 0) {
+        sum1 += sum % 10;
+        sum = Math.floor(sum / 10);
+      }
+    }
+    document.getElementById("vehcile_output").innerHTML = `Your vehicle number is: ${sum1}`;
+  }
+</script>
+</body>
 </html>
-
-
-
