@@ -1,358 +1,367 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Calculate Numbers</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Calculate Numbers — Refined</title>
 <link rel="icon" href="calculator.ico" type="image/x-icon">
 
 <!-- Fonts -->
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+
+<!-- GSAP (used only for subtle entrance / onboarding) -->
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
 
 <style>
-  /* Global Styles */
-  * {margin:0;padding:0;box-sizing:border-box;}
-  html, body {
-    font-family: 'Inter', sans-serif;
-    background: #111;
+  /* ---------- Design tokens (easy to tune) ---------- */
+  :root{
+    --bg-900: #0e0e10;
+    --bg-800: #141416;
+    --glass: rgba(255,255,255,0.04);
+    --muted: rgba(255,255,255,0.72);
+    --accent: #C0A060; /* gold */
+    --accent-soft: rgba(192,160,96,0.12);
+    --radius-lg: 14px;
+    --card-padding: 1.6rem;
+    --transition-fast: 180ms;
+    --transition-medium: 280ms;
+    --max-width: 1100px;
+  }
+
+  /* Reset & base */
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;
+    font-family: 'Inter', system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    background: radial-gradient(1200px 700px at 10% 10%, rgba(192,160,96,0.03), transparent 8%),
+                linear-gradient(180deg,var(--bg-900), var(--bg-800));
     color: #fff;
-    overflow-x: hidden;
-  }
-
-  /* Animated Gradient Overlay */
-  body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background: linear-gradient(-45deg, #111, #1b1b1b, #222, #111);
-    background-size: 400% 400%;
-    animation: gradientShift 15s ease infinite;
-    z-index: -1;
-  }
-  @keyframes gradientShift {
-    0% {background-position: 0% 50%;}
-    50% {background-position: 100% 50%;}
-    100% {background-position: 0% 50%;}
-  }
-
-  /* Typography */
-  h1, h2 {
-    font-family: 'Playfair Display', serif;
-    letter-spacing: 1px;
-  }
-  h1 {
-    font-size: 3rem;
-    color: #C0A060;
-  }
-  p {
-    font-size: 1.1rem;
-    opacity: 0.85;
+    -webkit-font-smoothing:antialiased;
+    -moz-osx-font-smoothing:grayscale;
+    overflow-x:hidden;
   }
 
   /* Layout */
-  .container {
-    max-width: 1200px;
-    margin: auto;
-    padding: 5rem 1rem;
-    position: relative;
-    z-index: 2;
-  }
-  .header {
-    text-align: center;
-    margin-bottom: 3rem;
-    opacity: 0;
-    transform: translateY(50px);
-    transition: 1s ease;
-  }
-  .form-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 2rem;
-  }
-  .card {
-    background: rgba(255, 255, 255, 0.05);
-    padding: 2rem;
-    border-radius: 15px;
-    backdrop-filter: blur(15px);
-    box-shadow: 0 10px 40px rgba(0,0,0,0.3);
-    transform: translateY(50px);
-    opacity: 0;
-    transition: 1s ease;
-  }
-  .card h2 {
-    color: #C0A060;
-    margin-bottom: 1rem;
-  }
-  label {
-    display: block;
-    margin: 0.5rem 0;
-    font-weight: 500;
-  }
-  input {
-    width: 100%;
-    padding: 0.8rem;
-    border-radius: 8px;
-    border: none;
-    margin-bottom: 1rem;
-    background: rgba(255,255,255,0.1);
-    color: white;
-  }
-  input::placeholder {color: rgba(255,255,255,0.5);}
-  button {
-    background: #C0A060;
-    color: black;
-    padding: 0.8rem 2rem;
-    border: none;
-    border-radius: 8px;
-    font-weight: bold;
-    cursor: pointer;
-    position: relative;
-    transition: transform 0.2s ease;
-  }
-  button:hover {transform: scale(1.05);}
-  .output {
-    margin-top: 1rem;
-    font-size: 1.2rem;
-    color: #fff;
-  }
+  .wrap{max-width:var(--max-width);margin:4.5rem auto;padding:2rem;position:relative;z-index:10}
+  header.site-head{ text-align:center;margin-bottom:2.4rem;opacity:0;transform:translateY(18px) }
+  h1{font-family:'Playfair Display',serif;font-size:2.4rem;margin:0;color:var(--accent);letter-spacing:0.6px}
+  p.lead{margin-top:0.45rem;color:var(--muted);font-size:1rem}
 
-  /* Cursor */
-  .cursor {
-    width: 25px;
-    height: 25px;
-    border: 2px solid #C0A060;
-    border-radius: 50%;
-    position: fixed;
-    pointer-events: none;
-    transition: transform 0.15s ease;
-    z-index: 999;
-    transform: translate(-50%, -50%);
+  /* Grid */
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1.25rem;align-items:start}
+
+  /* Card */
+  .card{
+    background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+    border-radius:var(--radius-lg);
+    padding:var(--card-padding);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 18px 40px rgba(2,6,12,0.6);
+    border:1px solid rgba(255,255,255,0.03);
+    transform:translateY(12px);
+    opacity:0;
+    transition: transform var(--transition-medium) cubic-bezier(.22,.9,.4,1), opacity var(--transition-medium) ease;
   }
+  .card h2{font-family:'Playfair Display',serif;margin:0 0 0.6rem 0;color:var(--accent);font-size:1.15rem}
+  label{display:block;margin-bottom:0.35rem;font-weight:600;color:var(--muted);font-size:0.92rem}
+  input[type="text"]{
+    width:100%;
+    padding:0.7rem 0.9rem;border-radius:10px;border:none;background:rgba(255,255,255,0.04);
+    color:#fff;font-size:0.98rem;outline:none;transition:box-shadow var(--transition-fast);
+    box-shadow: inset 0 -1px 0 rgba(255,255,255,0.02);
+  }
+  input[type="text"]::placeholder{color:rgba(255,255,255,0.38)}
+
+  /* Buttons */
+  .btn{
+    display:inline-flex;align-items:center;gap:0.6rem;padding:0.62rem 1rem;border-radius:10px;border:1px solid rgba(0,0,0,0.12);
+    background: linear-gradient(180deg,var(--accent), #a88845); color:#07100a;font-weight:700;cursor:pointer;font-size:0.95rem;
+    transition: transform var(--transition-fast) cubic-bezier(.2,.9,.3,1), box-shadow var(--transition-fast);
+  }
+  .btn:active{transform:translateY(1px)}
+  .btn:focus{outline:3px solid var(--accent-soft);outline-offset:3px}
+
+  /* Micro-hover */
+  .btn:hover{transform:translateY(-3px) scale(1.01);box-shadow:0 10px 30px rgba(0,0,0,0.45)}
+
+  /* Output */
+  .output{margin-top:0.9rem;color:var(--muted);font-weight:600}
+  .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+
+  /* Cursor ring (subtle) */
+  .cursor-ring{position:fixed;z-index:9999;left:0;top:0;width:18px;height:18px;border-radius:50%;border:1.5px solid var(--accent);transform:translate(-50%,-50%) scale(1);pointer-events:none;mix-blend-mode:exclusion;transition:transform 160ms cubic-bezier(.2,.9,.3,1),opacity 160ms linear;opacity:0.95}
 
   /* Footer */
-  footer {
-    text-align: center;
-    padding: 2rem;
-    font-size: 0.9rem;
-    color: rgba(255,255,255,0.6);
-    position: relative;
-    z-index: 2;
+  footer{padding:2rem;text-align:center;color:rgba(255,255,255,0.52);font-size:0.9rem}
+
+  /* Particles canvas underlay */
+  #particles{position:fixed;inset:0;z-index:0;pointer-events:none;mix-blend-mode:screen}
+
+  /* Utility: reveal visible */
+  .is-visible{opacity:1;transform:none}
+
+  /* Accessibility: visible focus */
+  :focus-visible{outline:3px solid var(--accent-soft);outline-offset:3px;border-radius:6px}
+
+  /* Respect reduced motion preference */
+  @media (prefers-reduced-motion: reduce){
+    *{animation:none !important;transition:none !important}
+    .card{transform:none;opacity:1}
+    .cursor-ring{display:none}
   }
 
-  /* Particle Canvas */
-  #particles {
-    position: fixed;
-    top:0;
-    left:0;
-    width: 100%;
-    height: 100%;
-    z-index: -2;
-    background: transparent;
+  /* Small screens tweak */
+  @media (max-width:520px){
+    h1{font-size:1.6rem}
+    .wrap{margin:2rem 1rem}
   }
 </style>
 </head>
 <body>
+  <!-- Particle background canvas -->
+  <canvas id="particles" aria-hidden="true"></canvas>
 
-<canvas id="particles"></canvas>
-<div class="cursor"></div>
+  <!-- Tiny ring cursor (nonessential) -->
+  <div id="cursor" class="cursor-ring" aria-hidden="true"></div>
 
-<div class="container">
-  <header class="header reveal">
-    <h1>Calculate Your Numbers</h1>
-    <p>Elegant, instant, and personalized numerology calculations.</p>
-  </header>
+  <main class="wrap" role="main">
+    <header class="site-head" id="siteHead">
+      <h1>Calculate Your Numbers</h1>
+      <p class="lead">A refined numerology experience — thoughtful motion, clear hierarchy, and accessible interactions.</p>
+    </header>
 
-  <div class="form-grid">
-    <div class="card reveal">
-      <h2>Driver & Conductor Numbers</h2>
-      <label for="birthdate">Birthdate (dd/mm/yyyy):</label>
-      <input type="text" id="birthdate" placeholder="01/01/1990">
-      <button onclick="calculate1()">Calculate</button>
-      <div id="results" class="output"></div>
-    </div>
+    <section class="grid" aria-label="numerology tools">
+      <article class="card" id="card-birth">
+        <h2>Driver &amp; Conductor Numbers</h2>
+        <label for="birthdate">Birthdate (dd/mm/yyyy)</label>
+        <input id="birthdate" type="text" inputmode="numeric" placeholder="01/01/1990" aria-describedby="birth-help" />
+        <div style="display:flex;gap:0.6rem;margin-top:0.6rem">
+          <button class="btn" id="btnBirth" type="button">Calculate</button>
+          <button class="btn" id="btnClearBirth" type="button" aria-label="Clear birthdate">Clear</button>
+        </div>
+        <div class="output" id="results" aria-live="polite" role="status"></div>
+      </article>
 
-    <div class="card reveal">
-      <h2>Name Number</h2>
-      <label for="name">Your Name:</label>
-      <input type="text" id="name" placeholder="John Doe">
-      <button onclick="calculate2()">Calculate</button>
-      <div id="output" class="output"></div>
-    </div>
+      <article class="card" id="card-name">
+        <h2>Name Number</h2>
+        <label for="name">Your full name</label>
+        <input id="name" type="text" placeholder="John Doe" />
+        <div style="display:flex;gap:0.6rem;margin-top:0.6rem">
+          <button class="btn" id="btnName" type="button">Calculate</button>
+          <button class="btn" id="btnClearName" type="button">Clear</button>
+        </div>
+        <div class="output" id="output" aria-live="polite"></div>
+      </article>
 
-    <div class="card reveal">
-      <h2>Vehicle Number</h2>
-      <label for="vehicle_number">Vehicle Number:</label>
-      <input type="text" id="vehicle_number" placeholder="1234">
-      <button onclick="sumDigits()">Calculate</button>
-      <div id="vehcile_output" class="output"></div>
-    </div>
-  </div>
-</div>
+      <article class="card" id="card-vehicle">
+        <h2>Vehicle Number</h2>
+        <label for="vehicle_number">Vehicle number / digits</label>
+        <input id="vehicle_number" type="text" inputmode="numeric" placeholder="1234" />
+        <div style="display:flex;gap:0.6rem;margin-top:0.6rem">
+          <button class="btn" id="btnVehicle" type="button">Calculate</button>
+          <button class="btn" id="btnClearVehicle" type="button">Clear</button>
+        </div>
+        <div class="output" id="vehicle_output" aria-live="polite"></div>
+      </article>
+    </section>
+  </main>
 
-<footer>
-  &copy; 2025 Calculate Numbers. All Rights Reserved.
-</footer>
+  <footer>&copy; <span id="year"></span> Calculate Numbers — All rights reserved.</footer>
 
 <script>
-  /* Scroll Reveal */
-  const reveals = document.querySelectorAll('.reveal');
-  window.addEventListener('scroll', () => {
-    reveals.forEach(el => {
-      const rect = el.getBoundingClientRect();
-      if(rect.top < window.innerHeight - 50) {
-        el.style.opacity = 1;
-        el.style.transform = 'translateY(0)';
-      }
-    });
-  });
+/* ----------------- small helpers & accessibility ----------------- */
+document.getElementById('year').textContent = new Date().getFullYear();
 
-  /* Cursor Effect */
-  const cursor = document.querySelector('.cursor');
+/* Prefer reduced motion? then skip GSAP entrances & cursor scaling */
+const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ----------------- Intersection reveal (efficient) ----------------- */
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      e.target.classList.add('is-visible');
+      observer.unobserve(e.target);
+    }
+  });
+}, {threshold: 0.12});
+
+document.querySelectorAll('.card, .site-head').forEach(el => observer.observe(el));
+
+/* ----------------- Simple Cursor Ring (subtle, nonessential) ----------------- */
+const cursor = document.getElementById('cursor');
+if (!prefersReduced) {
+  let lastMove = 0;
   document.addEventListener('mousemove', e => {
-    cursor.style.left = e.clientX + 'px';
-    cursor.style.top = e.clientY + 'px';
-  });
-  document.querySelectorAll('button').forEach(btn => {
-    btn.addEventListener('mouseenter', () => cursor.style.transform = 'scale(1.5)');
-    btn.addEventListener('mouseleave', () => cursor.style.transform = 'scale(1)');
+    cursor.style.left = `${e.clientX}px`;
+    cursor.style.top = `${e.clientY}px`;
+    const t = performance.now();
+    if (t - lastMove < 40) { // throttle scale updates
+      cursor.style.transform = 'translate(-50%,-50%) scale(1.25)';
+      setTimeout(()=> cursor.style.transform = 'translate(-50%,-50%) scale(1)', 180);
+    }
+    lastMove = t;
   });
 
-  /* Particle Physics Background */
+  // enlarge on interactive elements
+  document.querySelectorAll('button, a, input').forEach(el => {
+    el.addEventListener('mouseenter', () => cursor.style.transform = 'translate(-50%,-50%) scale(1.8)');
+    el.addEventListener('mouseleave', () => cursor.style.transform = 'translate(-50%,-50%) scale(1)');
+  });
+} else {
+  cursor.style.display = 'none';
+}
+
+/* ----------------- Particle background (lightweight) ----------------- */
+(function(){
   const canvas = document.getElementById('particles');
   const ctx = canvas.getContext('2d');
-  let particlesArray = [];
-  let mouse = {x: null, y: null};
+  let w = canvas.width = innerWidth;
+  let h = canvas.height = innerHeight;
+  const count = Math.max(18, Math.floor((w*h) / 120000)); // scale with viewport
+  const colors = ['rgba(192,160,96,0.12)','rgba(255,213,138,0.07)','rgba(255,240,192,0.05)'];
+  let particles = [];
 
-  canvas.width = innerWidth;
-  canvas.height = innerHeight;
+  function rand(min,max){return Math.random()*(max-min)+min}
 
-  window.addEventListener('resize', () => {
-    canvas.width = innerWidth;
-    canvas.height = innerHeight;
-    initParticles();
+  function Particle(){
+    this.x = rand(0,w);
+    this.y = rand(0,h);
+    this.r = rand(0.8,2.6);
+    this.vx = rand(-0.25,0.25);
+    this.vy = rand(-0.15,0.15);
+    this.c = colors[Math.floor(Math.random()*colors.length)];
+  }
+  Particle.prototype.update = function(mouse){
+    this.x += this.vx;
+    this.y += this.vy;
+    if (this.x < -10) this.x = w + 10;
+    if (this.x > w + 10) this.x = -10;
+    if (this.y < -10) this.y = h + 10;
+    if (this.y > h + 10) this.y = -10;
+    // mouse repel (soft)
+    if (mouse.x !== null){
+      const dx = this.x - mouse.x, dy = this.y - mouse.y;
+      const dist = Math.sqrt(dx*dx + dy*dy);
+      if (dist < 90){
+        const push = (90 - dist) * 0.008;
+        this.x += (dx / dist) * push;
+        this.y += (dy / dist) * push;
+      }
+    }
+  }
+  Particle.prototype.draw = function(){
+    ctx.beginPath();
+    ctx.fillStyle = this.c;
+    ctx.arc(this.x, this.y, this.r, 0, Math.PI*2);
+    ctx.fill();
+  }
+
+  function init(){
+    particles = [];
+    for(let i=0;i<count;i++) particles.push(new Particle());
+  }
+  const mouse = {x:null,y:null};
+  window.addEventListener('resize', () => { w = canvas.width = innerWidth; h = canvas.height = innerHeight; init(); });
+  window.addEventListener('mousemove', (e)=> { mouse.x = e.clientX; mouse.y = e.clientY; setTimeout(()=>{mouse.x=null;mouse.y=null},80) });
+
+  function loop(){
+    ctx.clearRect(0,0,w,h);
+    for(const p of particles){
+      p.update(mouse);
+      p.draw();
+    }
+    requestAnimationFrame(loop);
+  }
+
+  init();
+  if (!prefersReduced) loop(); else { /* draw static faint spots once */ particles.forEach(p => p.draw()); }
+})();
+
+/* ----------------- GSAP: onboarding + card subtle pop (only when motion allowed) ----------------- */
+if (!prefersReduced && window.gsap){
+  window.addEventListener('load', () => {
+    const ease = "expo.out";
+    gsap.from("#siteHead", {y:16, opacity:0, duration:0.7, ease});
+    gsap.from(".card", {y:16, opacity:0, duration:0.55, stagger:0.14, delay:0.18, ease: "power3.out"});
   });
+}
 
-  window.addEventListener('mousemove', e => {
-    mouse.x = e.x;
-    mouse.y = e.y;
+/* ----------------- Numerology / input logic (cleaner & accessible) ----------------- */
+/* Helpers: digit reduction to single-digit (1..9), 0 treated as 0 */
+function reduceToDigit(n){
+  n = Math.abs(Math.floor(Number(n) || 0));
+  while (n > 9 && n !== 11 && n !== 22) { // keep master numbers if you wanted (optional)
+    n = String(n).split('').reduce((a,c)=>a+Number(c),0);
+  }
+  return n;
+}
+
+/* Driver & Conductor */
+document.getElementById('btnBirth').addEventListener('click', ()=>{
+  const raw = document.getElementById('birthdate').value.trim();
+  const out = document.getElementById('results');
+  if (!/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(raw)){
+    out.textContent = "Please enter date in dd/mm/yyyy format.";
+    return;
+  }
+  const [dd,mm,yyyy] = raw.split('/').map(x => parseInt(x,10));
+  if (!(dd>=1 && dd<=31 && mm>=1 && mm<=12 && yyyy>1900 && yyyy < 2100)){
+    out.textContent = "Please enter a valid date.";
+    return;
+  }
+  const driver = dd < 10 ? dd : Math.floor(dd/10) + (dd % 10);
+  let conductor = (dd%10)+(mm%10)+(String(yyyy).split('').reduce((a,c)=>a+Number(c),0)) + Math.floor(dd/10)+Math.floor(mm/10)+Math.floor(yyyy/1000);
+  conductor = reduceToDigit(conductor);
+  out.textContent = `Driver No: ${driver} · Conductor No: ${conductor}`;
+});
+
+/* Name number — modernized with mapping */
+const alpha = {
+  a:1,i:1,j:1,q:1,y:1,
+  b:2,k:2,r:2,
+  c:3,g:3,l:3,s:3,
+  d:4,m:4,t:4,
+  e:5,h:5,n:5,x:5,
+  u:6,v:6,w:6,
+  o:7,z:7,
+  f:8,p:8
+};
+
+document.getElementById('btnName').addEventListener('click', ()=>{
+  const name = (document.getElementById('name').value || '').toLowerCase();
+  const out = document.getElementById('output');
+  if (!name.trim()){ out.textContent = "Please enter your name."; return; }
+  let sum = 0;
+  for (const ch of name) if (alpha[ch]) sum += alpha[ch];
+  out.textContent = `Your numerological value is: ${reduceToDigit(sum)}`;
+});
+
+/* Vehicle number */
+document.getElementById('btnVehicle').addEventListener('click', ()=>{
+  let val = (document.getElementById('vehicle_number').value || '');
+  const out = document.getElementById('vehicle_output');
+  const digits = val.split('').filter(c=>/\d/.test(c)).map(Number);
+  if (!digits.length){ out.textContent = "Enter at least one digit."; return; }
+  const sum = digits.reduce((a,b)=>a+b,0);
+  out.textContent = `Your vehicle number is: ${reduceToDigit(sum)}`;
+});
+
+/* Clear helpers */
+document.getElementById('btnClearBirth').addEventListener('click', ()=>{ document.getElementById('birthdate').value=''; document.getElementById('results').textContent=''; });
+document.getElementById('btnClearName').addEventListener('click', ()=>{ document.getElementById('name').value=''; document.getElementById('output').textContent=''; });
+document.getElementById('btnClearVehicle').addEventListener('click', ()=>{ document.getElementById('vehicle_number').value=''; document.getElementById('vehicle_output').textContent=''; });
+
+/* Small UX: pressing Enter triggers nearest calculate within each card */
+['birthdate','name','vehicle_number'].forEach(id=>{
+  document.getElementById(id).addEventListener('keydown', (e)=>{
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      const btn = e.target.closest('.card').querySelector('.btn');
+      if (btn) btn.click();
+    }
   });
-
-  class Particle {
-    constructor(x, y, size, color) {
-      this.x = x;
-      this.y = y;
-      this.size = size;
-      this.color = color;
-      this.speedX = (Math.random() - 0.5) * 0.5;
-      this.speedY = (Math.random() - 0.5) * 0.5;
-    }
-    draw() {
-      ctx.beginPath();
-      ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-      ctx.fillStyle = this.color;
-      ctx.shadowColor = this.color;
-      ctx.shadowBlur = 15;
-      ctx.fill();
-    }
-    update() {
-      this.x += this.speedX;
-      this.y += this.speedY;
-
-      // Bounce off edges
-      if (this.x < 0 || this.x > canvas.width) this.speedX *= -1;
-      if (this.y < 0 || this.y > canvas.height) this.speedY *= -1;
-
-      // Mouse repulsion
-      const dx = this.x - mouse.x;
-      const dy = this.y - mouse.y;
-      const dist = Math.sqrt(dx * dx + dy * dy);
-      if (dist < 100) {
-        this.x += dx / dist;
-        this.y += dy / dist;
-      }
-      this.draw();
-    }
-  }
-
-  function initParticles() {
-    particlesArray = [];
-    const colors = ['#C0A060', '#FFD580', '#FFF0C0'];
-    for (let i = 0; i < 80; i++) {
-      const size = Math.random() * 2 + 1;
-      const x = Math.random() * canvas.width;
-      const y = Math.random() * canvas.height;
-      const color = colors[Math.floor(Math.random() * colors.length)];
-      particlesArray.push(new Particle(x, y, size, color));
-    }
-  }
-
-  function animateParticles() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    particlesArray.forEach(p => p.update());
-    requestAnimationFrame(animateParticles);
-  }
-
-  initParticles();
-  animateParticles();
-
-  /* Calculator Functions */
-  function calculate1() {
-    let birthdate = document.getElementById("birthdate").value;
-    let dateParts = birthdate.split("/");
-    if(dateParts.length !== 3) return;
-    let day = parseInt(dateParts[0]);
-    let month = parseInt(dateParts[1]);
-    let year = parseInt(dateParts[2]);
-    let driver = day < 10 ? day : Math.floor(day / 10) + (day % 10);
-    let conductor = (day % 10) + (month % 10) + (year % 10) + Math.floor(day / 10) + Math.floor(month / 10) + Math.floor(year / 10);
-    while (conductor > 9) {
-      conductor = Math.floor(conductor / 10) + (conductor % 10);
-    }
-    document.getElementById("results").innerHTML = `Driver No: ${driver}<br>Conductor No: ${conductor}`;
-  }
-
-  function calculate2() {
-    const name = document.getElementById("name").value.toLowerCase();
-    const table = {
-      "a": 1, "i": 1, "j": 1, "q": 1, "y": 1,
-      "b": 2, "k": 2, "r": 2,
-      "c": 3, "g": 3, "l": 3, "s": 3,
-      "d": 4, "m": 4, "t": 4,
-      "e": 5, "h": 5, "n": 5, "x": 5,
-      "u": 6, "v": 6, "w": 6,
-      "o": 7, "z": 7,
-      "f": 8, "p": 8
-    };
-    let sum = 0;
-    for (let i = 0; i < name.length; i++) {
-      if (table.hasOwnProperty(name[i])) {
-        sum += table[name[i]];
-      }
-    }
-    while (sum > 9) {
-      sum = sum.toString().split("").reduce((acc, curr) => acc + parseInt(curr), 0);
-    }
-    document.getElementById("output").innerHTML = `Your numerological value is: ${sum}`;
-  }
-
-  function sumDigits() {
-    var vehicleNumber = document.getElementById("vehicle_number").value;
-    var sum = 0, sum1 = 0;
-    for (var i = 0; i < vehicleNumber.length; i++) {
-      if (!isNaN(vehicleNumber.charAt(i))) {
-        sum += parseInt(vehicleNumber.charAt(i));
-      }
-    }
-    if (sum < 10) {
-      sum1 = sum;
-    } else {
-      while (sum > 0) {
-        sum1 += sum % 10;
-        sum = Math.floor(sum / 10);
-      }
-    }
-    document.getElementById("vehcile_output").innerHTML = `Your vehicle number is: ${sum1}`;
-  }
+});
 </script>
 </body>
 </html>
