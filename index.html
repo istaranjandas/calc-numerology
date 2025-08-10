@@ -1,367 +1,134 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Calculate Numbers — Refined</title>
-<link rel="icon" href="calculator.ico" type="image/x-icon">
-
-<!-- Fonts -->
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
-
-<!-- GSAP (used only for subtle entrance / onboarding) -->
-<script defer src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
-
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Premium Numerology Calculator</title>
 <style>
-  /* ---------- Design tokens (easy to tune) ---------- */
-  :root{
-    --bg-900: #0e0e10;
-    --bg-800: #141416;
-    --glass: rgba(255,255,255,0.04);
-    --muted: rgba(255,255,255,0.72);
-    --accent: #C0A060; /* gold */
-    --accent-soft: rgba(192,160,96,0.12);
-    --radius-lg: 14px;
-    --card-padding: 1.6rem;
-    --transition-fast: 180ms;
-    --transition-medium: 280ms;
-    --max-width: 1100px;
-  }
-
-  /* Reset & base */
-  *{box-sizing:border-box}
-  html,body{height:100%}
-  body{
-    margin:0;
-    font-family: 'Inter', system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
-    background: radial-gradient(1200px 700px at 10% 10%, rgba(192,160,96,0.03), transparent 8%),
-                linear-gradient(180deg,var(--bg-900), var(--bg-800));
-    color: #fff;
-    -webkit-font-smoothing:antialiased;
-    -moz-osx-font-smoothing:grayscale;
-    overflow-x:hidden;
-  }
-
-  /* Layout */
-  .wrap{max-width:var(--max-width);margin:4.5rem auto;padding:2rem;position:relative;z-index:10}
-  header.site-head{ text-align:center;margin-bottom:2.4rem;opacity:0;transform:translateY(18px) }
-  h1{font-family:'Playfair Display',serif;font-size:2.4rem;margin:0;color:var(--accent);letter-spacing:0.6px}
-  p.lead{margin-top:0.45rem;color:var(--muted);font-size:1rem}
-
-  /* Grid */
-  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1.25rem;align-items:start}
-
-  /* Card */
-  .card{
-    background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-    border-radius:var(--radius-lg);
-    padding:var(--card-padding);
-    backdrop-filter: blur(10px);
-    box-shadow: 0 18px 40px rgba(2,6,12,0.6);
-    border:1px solid rgba(255,255,255,0.03);
-    transform:translateY(12px);
-    opacity:0;
-    transition: transform var(--transition-medium) cubic-bezier(.22,.9,.4,1), opacity var(--transition-medium) ease;
-  }
-  .card h2{font-family:'Playfair Display',serif;margin:0 0 0.6rem 0;color:var(--accent);font-size:1.15rem}
-  label{display:block;margin-bottom:0.35rem;font-weight:600;color:var(--muted);font-size:0.92rem}
-  input[type="text"]{
-    width:100%;
-    padding:0.7rem 0.9rem;border-radius:10px;border:none;background:rgba(255,255,255,0.04);
-    color:#fff;font-size:0.98rem;outline:none;transition:box-shadow var(--transition-fast);
-    box-shadow: inset 0 -1px 0 rgba(255,255,255,0.02);
-  }
-  input[type="text"]::placeholder{color:rgba(255,255,255,0.38)}
-
-  /* Buttons */
-  .btn{
-    display:inline-flex;align-items:center;gap:0.6rem;padding:0.62rem 1rem;border-radius:10px;border:1px solid rgba(0,0,0,0.12);
-    background: linear-gradient(180deg,var(--accent), #a88845); color:#07100a;font-weight:700;cursor:pointer;font-size:0.95rem;
-    transition: transform var(--transition-fast) cubic-bezier(.2,.9,.3,1), box-shadow var(--transition-fast);
-  }
-  .btn:active{transform:translateY(1px)}
-  .btn:focus{outline:3px solid var(--accent-soft);outline-offset:3px}
-
-  /* Micro-hover */
-  .btn:hover{transform:translateY(-3px) scale(1.01);box-shadow:0 10px 30px rgba(0,0,0,0.45)}
-
-  /* Output */
-  .output{margin-top:0.9rem;color:var(--muted);font-weight:600}
-  .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
-
-  /* Cursor ring (subtle) */
-  .cursor-ring{position:fixed;z-index:9999;left:0;top:0;width:18px;height:18px;border-radius:50%;border:1.5px solid var(--accent);transform:translate(-50%,-50%) scale(1);pointer-events:none;mix-blend-mode:exclusion;transition:transform 160ms cubic-bezier(.2,.9,.3,1),opacity 160ms linear;opacity:0.95}
-
-  /* Footer */
-  footer{padding:2rem;text-align:center;color:rgba(255,255,255,0.52);font-size:0.9rem}
-
-  /* Particles canvas underlay */
-  #particles{position:fixed;inset:0;z-index:0;pointer-events:none;mix-blend-mode:screen}
-
-  /* Utility: reveal visible */
-  .is-visible{opacity:1;transform:none}
-
-  /* Accessibility: visible focus */
-  :focus-visible{outline:3px solid var(--accent-soft);outline-offset:3px;border-radius:6px}
-
-  /* Respect reduced motion preference */
-  @media (prefers-reduced-motion: reduce){
-    *{animation:none !important;transition:none !important}
-    .card{transform:none;opacity:1}
-    .cursor-ring{display:none}
-  }
-
-  /* Small screens tweak */
-  @media (max-width:520px){
-    h1{font-size:1.6rem}
-    .wrap{margin:2rem 1rem}
-  }
+    body {
+        font-family: 'Poppins', sans-serif;
+        background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+        color: #fff;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        margin: 0;
+    }
+    .container {
+        background: rgba(255,255,255,0.05);
+        padding: 25px;
+        border-radius: 15px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+        backdrop-filter: blur(8px);
+        width: 350px;
+    }
+    h1 {
+        text-align: center;
+        margin-bottom: 20px;
+    }
+    input, button {
+        width: 100%;
+        padding: 10px;
+        margin-top: 10px;
+        border: none;
+        border-radius: 8px;
+    }
+    input {
+        background: rgba(255,255,255,0.1);
+        color: white;
+    }
+    button {
+        background: linear-gradient(90deg, #ff9966, #ff5e62);
+        color: white;
+        font-weight: bold;
+        cursor: pointer;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(255,94,98,0.4);
+    }
+    .result {
+        margin-top: 20px;
+        padding: 15px;
+        background: rgba(255,255,255,0.1);
+        border-radius: 10px;
+    }
+    .master-number {
+        color: gold;
+        font-weight: bold;
+        text-shadow: 0 0 8px rgba(255,215,0,0.8);
+    }
 </style>
 </head>
 <body>
-  <!-- Particle background canvas -->
-  <canvas id="particles" aria-hidden="true"></canvas>
-
-  <!-- Tiny ring cursor (nonessential) -->
-  <div id="cursor" class="cursor-ring" aria-hidden="true"></div>
-
-  <main class="wrap" role="main">
-    <header class="site-head" id="siteHead">
-      <h1>Calculate Your Numbers</h1>
-      <p class="lead">A refined numerology experience — thoughtful motion, clear hierarchy, and accessible interactions.</p>
-    </header>
-
-    <section class="grid" aria-label="numerology tools">
-      <article class="card" id="card-birth">
-        <h2>Driver &amp; Conductor Numbers</h2>
-        <label for="birthdate">Birthdate (dd/mm/yyyy)</label>
-        <input id="birthdate" type="text" inputmode="numeric" placeholder="01/01/1990" aria-describedby="birth-help" />
-        <div style="display:flex;gap:0.6rem;margin-top:0.6rem">
-          <button class="btn" id="btnBirth" type="button">Calculate</button>
-          <button class="btn" id="btnClearBirth" type="button" aria-label="Clear birthdate">Clear</button>
-        </div>
-        <div class="output" id="results" aria-live="polite" role="status"></div>
-      </article>
-
-      <article class="card" id="card-name">
-        <h2>Name Number</h2>
-        <label for="name">Your full name</label>
-        <input id="name" type="text" placeholder="John Doe" />
-        <div style="display:flex;gap:0.6rem;margin-top:0.6rem">
-          <button class="btn" id="btnName" type="button">Calculate</button>
-          <button class="btn" id="btnClearName" type="button">Clear</button>
-        </div>
-        <div class="output" id="output" aria-live="polite"></div>
-      </article>
-
-      <article class="card" id="card-vehicle">
-        <h2>Vehicle Number</h2>
-        <label for="vehicle_number">Vehicle number / digits</label>
-        <input id="vehicle_number" type="text" inputmode="numeric" placeholder="1234" />
-        <div style="display:flex;gap:0.6rem;margin-top:0.6rem">
-          <button class="btn" id="btnVehicle" type="button">Calculate</button>
-          <button class="btn" id="btnClearVehicle" type="button">Clear</button>
-        </div>
-        <div class="output" id="vehicle_output" aria-live="polite"></div>
-      </article>
-    </section>
-  </main>
-
-  <footer>&copy; <span id="year"></span> Calculate Numbers — All rights reserved.</footer>
-
+<div class="container">
+    <h1>Numerology Calculator</h1>
+    <input type="text" id="name" placeholder="Enter your name">
+    <input type="date" id="dob">
+    <button onclick="calculateNumerology()">Calculate</button>
+    <div class="result" id="result"></div>
+</div>
 <script>
-/* ----------------- small helpers & accessibility ----------------- */
-document.getElementById('year').textContent = new Date().getFullYear();
-
-/* Prefer reduced motion? then skip GSAP entrances & cursor scaling */
-const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-/* ----------------- Intersection reveal (efficient) ----------------- */
-const observer = new IntersectionObserver((entries) => {
-  entries.forEach(e => {
-    if (e.isIntersecting) {
-      e.target.classList.add('is-visible');
-      observer.unobserve(e.target);
+function reduceNumber(num) {
+    while (num > 9 && num !== 11 && num !== 22 && num !== 33) {
+        num = num.toString().split('').reduce((a,b) => a + parseInt(b), 0);
     }
-  });
-}, {threshold: 0.12});
-
-document.querySelectorAll('.card, .site-head').forEach(el => observer.observe(el));
-
-/* ----------------- Simple Cursor Ring (subtle, nonessential) ----------------- */
-const cursor = document.getElementById('cursor');
-if (!prefersReduced) {
-  let lastMove = 0;
-  document.addEventListener('mousemove', e => {
-    cursor.style.left = `${e.clientX}px`;
-    cursor.style.top = `${e.clientY}px`;
-    const t = performance.now();
-    if (t - lastMove < 40) { // throttle scale updates
-      cursor.style.transform = 'translate(-50%,-50%) scale(1.25)';
-      setTimeout(()=> cursor.style.transform = 'translate(-50%,-50%) scale(1)', 180);
-    }
-    lastMove = t;
-  });
-
-  // enlarge on interactive elements
-  document.querySelectorAll('button, a, input').forEach(el => {
-    el.addEventListener('mouseenter', () => cursor.style.transform = 'translate(-50%,-50%) scale(1.8)');
-    el.addEventListener('mouseleave', () => cursor.style.transform = 'translate(-50%,-50%) scale(1)');
-  });
-} else {
-  cursor.style.display = 'none';
+    return num;
 }
 
-/* ----------------- Particle background (lightweight) ----------------- */
-(function(){
-  const canvas = document.getElementById('particles');
-  const ctx = canvas.getContext('2d');
-  let w = canvas.width = innerWidth;
-  let h = canvas.height = innerHeight;
-  const count = Math.max(18, Math.floor((w*h) / 120000)); // scale with viewport
-  const colors = ['rgba(192,160,96,0.12)','rgba(255,213,138,0.07)','rgba(255,240,192,0.05)'];
-  let particles = [];
-
-  function rand(min,max){return Math.random()*(max-min)+min}
-
-  function Particle(){
-    this.x = rand(0,w);
-    this.y = rand(0,h);
-    this.r = rand(0.8,2.6);
-    this.vx = rand(-0.25,0.25);
-    this.vy = rand(-0.15,0.15);
-    this.c = colors[Math.floor(Math.random()*colors.length)];
-  }
-  Particle.prototype.update = function(mouse){
-    this.x += this.vx;
-    this.y += this.vy;
-    if (this.x < -10) this.x = w + 10;
-    if (this.x > w + 10) this.x = -10;
-    if (this.y < -10) this.y = h + 10;
-    if (this.y > h + 10) this.y = -10;
-    // mouse repel (soft)
-    if (mouse.x !== null){
-      const dx = this.x - mouse.x, dy = this.y - mouse.y;
-      const dist = Math.sqrt(dx*dx + dy*dy);
-      if (dist < 90){
-        const push = (90 - dist) * 0.008;
-        this.x += (dx / dist) * push;
-        this.y += (dy / dist) * push;
-      }
+function getNameNumber(name) {
+    const letters = {
+        A:1,B:2,C:3,D:4,E:5,F:6,G:7,H:8,I:9,
+        J:1,K:2,L:3,M:4,N:5,O:6,P:7,Q:8,R:9,
+        S:1,T:2,U:3,V:4,W:5,X:6,Y:7,Z:8
+    };
+    let sum = 0;
+    name = name.toUpperCase().replace(/[^A-Z]/g, '');
+    for (let char of name) {
+        sum += letters[char] || 0;
     }
-  }
-  Particle.prototype.draw = function(){
-    ctx.beginPath();
-    ctx.fillStyle = this.c;
-    ctx.arc(this.x, this.y, this.r, 0, Math.PI*2);
-    ctx.fill();
-  }
-
-  function init(){
-    particles = [];
-    for(let i=0;i<count;i++) particles.push(new Particle());
-  }
-  const mouse = {x:null,y:null};
-  window.addEventListener('resize', () => { w = canvas.width = innerWidth; h = canvas.height = innerHeight; init(); });
-  window.addEventListener('mousemove', (e)=> { mouse.x = e.clientX; mouse.y = e.clientY; setTimeout(()=>{mouse.x=null;mouse.y=null},80) });
-
-  function loop(){
-    ctx.clearRect(0,0,w,h);
-    for(const p of particles){
-      p.update(mouse);
-      p.draw();
-    }
-    requestAnimationFrame(loop);
-  }
-
-  init();
-  if (!prefersReduced) loop(); else { /* draw static faint spots once */ particles.forEach(p => p.draw()); }
-})();
-
-/* ----------------- GSAP: onboarding + card subtle pop (only when motion allowed) ----------------- */
-if (!prefersReduced && window.gsap){
-  window.addEventListener('load', () => {
-    const ease = "expo.out";
-    gsap.from("#siteHead", {y:16, opacity:0, duration:0.7, ease});
-    gsap.from(".card", {y:16, opacity:0, duration:0.55, stagger:0.14, delay:0.18, ease: "power3.out"});
-  });
+    return reduceNumber(sum);
 }
 
-/* ----------------- Numerology / input logic (cleaner & accessible) ----------------- */
-/* Helpers: digit reduction to single-digit (1..9), 0 treated as 0 */
-function reduceToDigit(n){
-  n = Math.abs(Math.floor(Number(n) || 0));
-  while (n > 9 && n !== 11 && n !== 22) { // keep master numbers if you wanted (optional)
-    n = String(n).split('').reduce((a,c)=>a+Number(c),0);
-  }
-  return n;
+function getDriverNumber(day) {
+    return reduceNumber(parseInt(day));
 }
 
-/* Driver & Conductor */
-document.getElementById('btnBirth').addEventListener('click', ()=>{
-  const raw = document.getElementById('birthdate').value.trim();
-  const out = document.getElementById('results');
-  if (!/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(raw)){
-    out.textContent = "Please enter date in dd/mm/yyyy format.";
-    return;
-  }
-  const [dd,mm,yyyy] = raw.split('/').map(x => parseInt(x,10));
-  if (!(dd>=1 && dd<=31 && mm>=1 && mm<=12 && yyyy>1900 && yyyy < 2100)){
-    out.textContent = "Please enter a valid date.";
-    return;
-  }
-  const driver = dd < 10 ? dd : Math.floor(dd/10) + (dd % 10);
-  let conductor = (dd%10)+(mm%10)+(String(yyyy).split('').reduce((a,c)=>a+Number(c),0)) + Math.floor(dd/10)+Math.floor(mm/10)+Math.floor(yyyy/1000);
-  conductor = reduceToDigit(conductor);
-  out.textContent = `Driver No: ${driver} · Conductor No: ${conductor}`;
-});
+function getConductorNumber(day, month, year) {
+    const total = reduceNumber(parseInt(day)) +
+                  reduceNumber(parseInt(month)) +
+                  reduceNumber(parseInt(year));
+    return reduceNumber(total);
+}
 
-/* Name number — modernized with mapping */
-const alpha = {
-  a:1,i:1,j:1,q:1,y:1,
-  b:2,k:2,r:2,
-  c:3,g:3,l:3,s:3,
-  d:4,m:4,t:4,
-  e:5,h:5,n:5,x:5,
-  u:6,v:6,w:6,
-  o:7,z:7,
-  f:8,p:8
-};
-
-document.getElementById('btnName').addEventListener('click', ()=>{
-  const name = (document.getElementById('name').value || '').toLowerCase();
-  const out = document.getElementById('output');
-  if (!name.trim()){ out.textContent = "Please enter your name."; return; }
-  let sum = 0;
-  for (const ch of name) if (alpha[ch]) sum += alpha[ch];
-  out.textContent = `Your numerological value is: ${reduceToDigit(sum)}`;
-});
-
-/* Vehicle number */
-document.getElementById('btnVehicle').addEventListener('click', ()=>{
-  let val = (document.getElementById('vehicle_number').value || '');
-  const out = document.getElementById('vehicle_output');
-  const digits = val.split('').filter(c=>/\d/.test(c)).map(Number);
-  if (!digits.length){ out.textContent = "Enter at least one digit."; return; }
-  const sum = digits.reduce((a,b)=>a+b,0);
-  out.textContent = `Your vehicle number is: ${reduceToDigit(sum)}`;
-});
-
-/* Clear helpers */
-document.getElementById('btnClearBirth').addEventListener('click', ()=>{ document.getElementById('birthdate').value=''; document.getElementById('results').textContent=''; });
-document.getElementById('btnClearName').addEventListener('click', ()=>{ document.getElementById('name').value=''; document.getElementById('output').textContent=''; });
-document.getElementById('btnClearVehicle').addEventListener('click', ()=>{ document.getElementById('vehicle_number').value=''; document.getElementById('vehicle_output').textContent=''; });
-
-/* Small UX: pressing Enter triggers nearest calculate within each card */
-['birthdate','name','vehicle_number'].forEach(id=>{
-  document.getElementById(id).addEventListener('keydown', (e)=>{
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      const btn = e.target.closest('.card').querySelector('.btn');
-      if (btn) btn.click();
+function formatNumber(num) {
+    if ([11, 22, 33].includes(num)) {
+        return `<span class="master-number">${num}</span>`;
     }
-  });
-});
+    return num;
+}
+
+function calculateNumerology() {
+    const name = document.getElementById('name').value.trim();
+    const dob = document.getElementById('dob').value;
+    if (!name || !dob) {
+        document.getElementById('result').innerHTML = '<p>Please enter both name and birth date.</p>';
+        return;
+    }
+
+    const [year, month, day] = dob.split('-');
+    const nameNumber = getNameNumber(name);
+    const driverNumber = getDriverNumber(day);
+    const conductorNumber = getConductorNumber(day, month, year);
+
+    document.getElementById('result').innerHTML = `
+        <p><strong>Name Number:</strong> ${formatNumber(nameNumber)}</p>
+        <p><strong>Driver Number:</strong> ${formatNumber(driverNumber)}</p>
+        <p><strong>Conductor Number:</strong> ${formatNumber(conductorNumber)}</p>
+    `;
+}
 </script>
 </body>
 </html>
